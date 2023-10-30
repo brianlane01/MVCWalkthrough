@@ -1,32 +1,35 @@
+using System.Net.Http;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Logging;
+using System.Threading.Tasks;
+using System.Text.Json;
+using SwapiMVC.Models;
 
-namespace SwapiMVC.Controllers
+namespace SwapiMVC.Controllers;
+
+[Route("[controller]")]
+public class PeopleController : Controller
 {
-    // [Route("[controller]")]
-    public class PeopleController : Controller
+    // private readonly ILogger<PeopleController> _logger;
+    private readonly HttpClient _httpClient;
+    public PeopleController(IHttpClientFactory httpClientFactory)
     {
-        // private readonly ILogger<PeopleController> _logger;
-        private readonly HttpClient _httpClient;
-        public PeopleController(IHttpClientFactory httpClientFactory)
-        {
-            httpClientFactory.CreateClient("swapi");
-        }
-
-        public IActionResult Index()
-        {
-            return View();
-        }
-
-    //     [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
-    //     public IActionResult Error()
-    //     {
-    //         return View("Error!");
-    //     }
+        _httpClient = httpClientFactory.CreateClient("swapi");
     }
+
+    public async Task<IActionResult> Index(string page)
+    {
+        string route = $"people?page={page ?? "1"}";
+        HttpResponseMessage response = await _httpClient.GetAsync(route);
+
+        var responseString = await response.Content.ReadAsStringAsync();
+        var people = JsonSerializer.Deserialize<ResultsViewModel<PeopleViewModel>>(responseString);
+
+        return View(people);
+    }
+
+
 }
